@@ -58,5 +58,23 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     cell.textLabel?.text = todoList[indexPath.row]
     return cell
   }
+  
+  //削除ボタン表示
+  func tableView(_ tableView: UITableView, titleForDeleteConfirmationButtonForRowAt indexPath: IndexPath) -> String? {
+    return "削除"
+  }
+  
+  //削除許可
+  func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+    return true
+  }
+  
+  //削除ボタン
+  func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+    if editingStyle == UITableViewCellEditingStyle.delete {
+      todoList.remove(at: indexPath.row)
+      tableView.reloadData()
+    }
+  }
 }
 
