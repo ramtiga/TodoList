@@ -17,6 +17,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
   override func viewDidLoad() {
     super.viewDidLoad()
     // Do any additional setup after loading the view, typically from a nib.
+    
+    //保存データ読み込み
+    let userdefaults = UserDefaults.standard
+    if let saveData = userdefaults.array(forKey: "todoList") as? [String] {
+      todoList.append(contentsOf: saveData)
+    }
   }
 
   override func didReceiveMemoryWarning() {
@@ -35,6 +41,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
       if let txtField = alert.textFields?.first {
         self.todoList.insert(txtField.text!, at: 0)
         self.tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: UITableViewRowAnimation.right)
+        
+        //UserDefaults保存処理
+        let userdefaults = UserDefaults.standard
+        userdefaults.set(self.todoList, forKey: "todoList")
+        userdefaults.synchronize()
       }
     }
     //OKボタン追加
