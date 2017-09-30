@@ -12,7 +12,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
   
   @IBOutlet weak var tableView: UITableView!
   
-  var todoList = [String]()
+  var todoList = [MyTodo]()
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -20,8 +20,11 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     //保存データ読み込み
     let userdefaults = UserDefaults.standard
-    if let saveData = userdefaults.array(forKey: "todoList") as? [String] {
-      todoList.append(contentsOf: saveData)
+    
+    if let saveData = userdefaults.object(forKey: "todoList") as? Data {
+      if let unarchive = NSKeyedUnarchiver.unarchiveObject(with: saveData) as? [MyTodo] {
+        todoList.append(contentsOf: unarchive)
+      }
     }
   }
 
@@ -39,12 +42,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     let okAction = UIAlertAction(title: "OK", style: UIAlertActionStyle.default) { (action:UIAlertAction) in
       //OKボタン
       if let txtField = alert.textFields?.first {
-        self.todoList.insert(txtField.text!, at: 0)
+        let myTodo = MyTodo()
+        myTodo.todoTitle = txtField.text!
+        self.todoList.insert(myTodo, at: 0)
         self.tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: UITableViewRowAnimation.right)
         
         //UserDefaults保存処理
         let userdefaults = UserDefaults.standard
-        userdefaults.set(self.todoList, forKey: "todoList")
+        let data = NSKeyedArchiver.archivedData(withRootObject: self.todoList)
+        userdefaults.set(data, forKey: "todoList")
         userdefaults.synchronize()
       }
     }
@@ -66,7 +72,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
   
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "todoCell", for: indexPath)
-    cell.textLabel?.text = todoList[indexPath.row]
+    let myTodo = todoList[indexPath.row]
+    cell.textLabel?.text = myTodo.todoTitle
+    
+    //チェック状態設定
+    if myTodo.todoDoneFlg {
+      cell.accessoryType = UITableViewCellAccessoryType.checkmark
+    } else {
+      cell.accessoryType = UITableViewCellAccessoryType.none
+    }
     return cell
   }
   
@@ -87,5 +101,42 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
       tableView.reloadData()
     }
   }
+  
+  func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    let myTodo = todoList[indexPath.row]
+    if myTodo.todoDoneFlg {
+      myTodo.todoDoneFlg = false
+    } else {
+      myTodo.todoDoneFlg = true
+    }
+    tableView.reloadRows(at: [indexPath], with: UITableViewRowAnimation.fade)
+    
+    //データ保存
+    let data: Data = NSKeyedArchiver.archivedData(withRootObject: todoList)
+    let userdefaults = UserDefaults.standard
+    userdefaults.set(data, forKey: "todoList")
+    userdefaults.synchronize()
+  }
 }
+
+class MyTodo: NSObject, NSCoding {
+  var todoTitle: String?
+  var todoDoneFlg: Bool = false
+  
+  override init() {
+  }
+
+  //デコード処理
+  required init?(coder aDecoder: NSCoder) {
+    todoTitle = aDecoder.decodeObject(forKey: "todoTitle") as? String
+    todoDoneFlg = aDecoder.decodeBool(forKey: "todoDoneFlg")
+  }
+  
+  //エンコード処理
+  func encode(with aCoder: NSCoder) {
+    aCoder.encode(todoTitle, forKey: "todoTitle")
+    aCoder.encode(todoDoneFlg, forKey: "todoDoneFlg")
+  }
+}
+
 
