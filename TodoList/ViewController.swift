@@ -98,7 +98,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
   func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
     if editingStyle == UITableViewCellEditingStyle.delete {
       todoList.remove(at: indexPath.row)
-      tableView.reloadData()
+      tableView.deleteRows(at: [indexPath], with: UITableViewRowAnimation.fade)
+      
+      let data: Data = NSKeyedArchiver.archivedData(withRootObject: todoList)
+      let userdefaults = UserDefaults.standard
+      userdefaults.set(data, forKey: "todoList")
+      userdefaults.synchronize()
     }
   }
   
